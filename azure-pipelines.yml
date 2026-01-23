@@ -1,7 +1,7 @@
 pool:
   name: 'rhtap-testing' # The name of your pool
   demands:
-    - Agent.Name -equals tssc-testing-agent-5
+    - Agent.Name -equals tssc-testing-agent-1
 
 steps:
 - script: |
@@ -9,16 +9,16 @@ steps:
     df -h
     
     # 1. Clean the agent's specific work directory
-    echo "Cleaning work directory..."
-    pwd
-    cd ../../..
-    ls -la
+    # Target ONLY the work folder, not the home directory
+
+    echo "Cleaning agent work folder: $(Agent.WorkFolder)"
     
-    rm -rf ./_work/*
+    # We use -rf on the contents of the work folder to keep the folder itself
+    rm -rf $(Agent.WorkFolder)/*
     
     # 2. Clean the shared Docker cache
     echo "Pruning Docker (this is usually the main issue)..."
-    docker system prune -af --volumes
+    docker system prune -af --filter "until=12h"
     
     echo "Disk usage after cleanup:"
     df -h
