@@ -1,7 +1,7 @@
 pool:
   name: 'rhtap-testing' # The name of your pool
   demands:
-    - Agent.Name -equals tssc-testing-agent-2
+    - Agent.Name -equals tssc-testing-agent-3
 
 steps:
 - script: |
