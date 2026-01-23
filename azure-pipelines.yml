@@ -1,7 +1,7 @@
 pool:
-  name: 'shared-public' # The name of your pool
+  name: 'rhtap-testing' # The name of your pool
   demands:
-    - Agent.Name -equals tssc-testing-agent
+    - Agent.Name -equals rhtap-test-agent
 
 steps:
 - script: |
