@@ -11,7 +11,9 @@ steps:
     # 1. Clean the agent's specific work directory
     echo "Cleaning work directory..."
     pwd
-    rm -rf ../_work/*
+    echo "Home -> $HOME"
+    cd $HOME
+    rm -rf ./_work/*
     
     # 2. Clean the shared Docker cache
     echo "Pruning Docker (this is usually the main issue)..."
