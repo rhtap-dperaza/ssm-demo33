@@ -1,0 +1,22 @@
+pool:
+  name: 'shared-public' # The name of your pool
+  demands:
+    - Agent.Name -equals tssc-testing-agent
+
+steps:
+- script: |
+    echo "Current disk usage before cleanup:"
+    df -h
+    
+    # 1. Clean the agent's specific work directory
+    echo "Cleaning work directory..."
+    pwd
+    rm -rf ../_work/*
+    
+    # 2. Clean the shared Docker cache
+    echo "Pruning Docker (this is usually the main issue)..."
+    docker system prune -af --volumes
+    
+    echo "Disk usage after cleanup:"
+    df -h
+  displayName: 'Emergency Agent Disk Scrub'
