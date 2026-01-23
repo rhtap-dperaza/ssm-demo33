@@ -14,6 +14,7 @@ steps:
     echo "Cleaning agent work folder: $(Agent.WorkFolder)"
     
     # We use -rf on the contents of the work folder to keep the folder itself
+    cd $(Agent.HomeDirectory)
     rm -rf $(Agent.WorkFolder)/*
     
     # 2. Clean the shared Docker cache
