@@ -20,6 +20,7 @@ steps:
     # 2. Clean the shared Docker cache
     echo "Pruning Docker"
     docker system prune -af
+    docker builder prune -f
     
     echo "Disk usage after cleanup:"
     df -h
