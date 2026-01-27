@@ -40,7 +40,7 @@ steps:
       cd $(Agent.HomeDirectory)
       ls $(Agent.WorkFolder)
       echo "Running Docker prune targeting images older than 12h"
-      podman system prune -af --filter
+      podman system prune -af
       echo "Disk usage after cleanup:"
       df -h
     name: cleanup
