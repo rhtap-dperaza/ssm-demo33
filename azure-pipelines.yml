@@ -1,27 +1,87 @@
+# Generated from templates/source-repo/azure-pipelines.yml.njk. Do not edit directly.
+
+pr: none
+
+trigger:
+  - main
+
+# Using self-hosted 'Default' agent pool by default
+# Change accordingly when using a different agent pool
+# Can be deleted if self-hosted agents are not being used
+# See https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents
 pool:
-  name: 'rhtap-testing' # The name of your pool
-  demands:
-    - Agent.Name -equals rhtap-test-agent
+  name: rhtap-testing
 
-steps:
-- script: |
-    echo "Current disk usage before cleanup:"
-    df -h
-    
-    # 1. Clean the agent's specific work directory
-    # Target ONLY the work folder, not the home directory
+# Using 'tssc' variable group by default
+# Change accordingly when using a different variable group
+# Can be deleted if the variables are set differently
+# See https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables
+variables:
+  - group: tssc
+  - name: CI_TYPE
+    value: azure
 
-    echo "Cleaning agent work folder: $(Agent.WorkFolder)"
-    
-    # We use -rf on the contents of the work folder to keep the folder itself
-    cd $(Agent.HomeDirectory)
-    rm -rf $(Agent.WorkFolder)/*
-    
-    # 2. Clean the shared Docker cache
-    echo "Pruning Docker"
-    docker system prune -af
-    docker builder prune -f
-    
-    echo "Disk usage after cleanup:"
-    df -h
-  displayName: 'Emergency Agent Disk Scrub'
+jobs:
+- job: Build_Workload
+  displayName: "TSSC Build and Scan"
+  container:
+    image: quay.io/redhat-appstudio/rhtap-task-runner:latest
+    options: --privileged
+  steps:
+    - checkout: self
+      clean: true
+    - bash: |
+        echo "• init"
+        echo "Testing init"
+      name: init
+      env:
+        ROX_API_TOKEN: $(ROX_API_TOKEN)
+        # Uncomment this when using Bitbucket
+        # GITOPS_AUTH_USERNAME: $(GITOPS_AUTH_USERNAME)
+        GITOPS_AUTH_PASSWORD: $(GITOPS_AUTH_PASSWORD)
+        # Set this password for your specific registry
+        IMAGE_REGISTRY_PASSWORD: $(IMAGE_REGISTRY_PASSWORD)
+        # QUAY_IO_CREDS_PSW: $(QUAY_IO_CREDS_PSW)
+        # ARTIFACTORY_IO_CREDS_PSW: $(ARTIFACTORY_IO_CREDS_PSW)
+        # NEXUS_IO_CREDS_PSW: $(NEXUS_IO_CREDS_PSW)
+        COSIGN_SECRET_PASSWORD: $(COSIGN_SECRET_PASSWORD)
+        COSIGN_SECRET_KEY: $(COSIGN_SECRET_KEY)
+    - bash: |
+        echo "• rhtap-testing"
+        echo "Testing rhtap-testing"
+        echo "• cosign-sign-attest"
+        echo "Testing cosign-sign-attest"
+      name: build
+      env:
+        ROX_API_TOKEN: $(ROX_API_TOKEN)
+        # Uncomment this when using Bitbucket
+        # GITOPS_AUTH_USERNAME: $(GITOPS_AUTH_USERNAME)
+        GITOPS_AUTH_PASSWORD: $(GITOPS_AUTH_PASSWORD)
+        # Set this password for your specific registry
+        IMAGE_REGISTRY_PASSWORD: $(IMAGE_REGISTRY_PASSWORD)
+        # QUAY_IO_CREDS_PSW: $(QUAY_IO_CREDS_PSW)
+        # ARTIFACTORY_IO_CREDS_PSW: $(ARTIFACTORY_IO_CREDS_PSW)
+        # NEXUS_IO_CREDS_PSW: $(NEXUS_IO_CREDS_PSW)
+        COSIGN_SECRET_PASSWORD: $(COSIGN_SECRET_PASSWORD)
+        COSIGN_SECRET_KEY: $(COSIGN_SECRET_KEY)
+- job: Host_Cleanup
+  displayName: "Host OS Maintenance"
+  dependsOn: Build_Workload
+  condition: always() # Ensures cleanup runs even if the build fails
+  steps:
+    - checkout: none # No need to pull code just to delete it
+    - script: |
+        echo "Current disk usage before cleanup:"
+        df -h
+        
+        echo "Performing docker prune (12h buffer)..."
+        docker system prune -af --filter "until=12h"
+        
+        # Workspace Scrub
+        echo "Cleaning work folder: $(Agent.WorkFolder)"
+        cd $(Agent.HomeDirectory)
+        rm -rf $(Agent.WorkFolder)/* || true
+        
+        echo "Final disk state:"
+        df -h
+      displayName: 'Post-Job Host Scrub'
