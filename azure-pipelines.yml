@@ -26,6 +26,8 @@ variables:
     value: azure
 
 steps:
+  - checkout: self
+    clean: true
   - bash: |
       echo "• cleanup agent storage"
       echo "Disk usage before cleanup:"
@@ -37,9 +39,8 @@ steps:
       echo "Moving to Home dir: $(Agent.HomeDirectory)"
       cd $(Agent.HomeDirectory)
       ls $(Agent.WorkFolder)
-      rm -rf $(Agent.WorkFolder)/*
       echo "Running Docker prune targeting images older than 12h"
-      podman system prune -af --filter "until=12h"
+      podman system prune -af --filter
       echo "Disk usage after cleanup:"
       df -h
     name: cleanup
