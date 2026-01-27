@@ -1,47 +1,26 @@
-# Generated from templates/source-repo/azure-pipelines.yml.njk. Do not edit directly.
-
-pr: none
-
-trigger:
-  - main
-
-# Using self-hosted 'Default' agent pool by default
-# Change accordingly when using a different agent pool
-# Can be deleted if self-hosted agents are not being used
-# See https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents
 pool:
-  name: rhtap-testing
-
-container:
-  image: quay.io/redhat-user-workloads/rhtap-shared-team-tenant/rhtap-task-runner@sha256:08e69dfad0be176e316d09b443e9039ac95bf3d6d5a84c0913b68fafb22149a1
-  options: --privileged
-
-# Using 'tssc' variable group by default
-# Change accordingly when using a different variable group
-# Can be deleted if the variables are set differently
-# See https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables
-variables:
-  - group: backend-tests-dotnet-basic-txbafaik
-  - name: CI_TYPE
-    value: azure
+  name: 'rhtap-testing' # The name of your pool
+  demands:
+    - Agent.Name -equals tssc-testing-agent-1
 
 steps:
-  - checkout: self
-    clean: true
-  - bash: |
-      echo "• cleanup agent storage"
-      echo "Disk usage before cleanup:"
-      df -h
-      echo "Current Directory:"
-      pwd
-      env
-      echo "Cleaning directory: $(Agent.WorkFolder)"
-      echo "Moving to Home dir: $(Agent.HomeDirectory)"
-      cd $(Agent.HomeDirectory)
-      ls $(Agent.WorkFolder)
-      echo "Running Docker prune targeting images older than 12h"
-      podman system prune -af
-      echo "Disk usage after cleanup:"
-      df -h
-    name: cleanup
-    condition: always()
+- script: |
+    echo "Current disk usage before cleanup:"
+    df -h
+    
+    # 1. Clean the agent's specific work directory
+    # Target ONLY the work folder, not the home directory
+
+    echo "Cleaning agent work folder: $(Agent.WorkFolder)"
+    
+    # We use -rf on the contents of the work folder to keep the folder itself
+    cd $(Agent.HomeDirectory)
+    rm -rf $(Agent.WorkFolder)/*
+    
+    # 2. Clean the shared Docker cache
+    echo "Pruning Docker"
+    docker system prune -af
+    
+    echo "Disk usage after cleanup:"
+    df -h
+  displayName: 'Emergency Agent Disk Scrub'
