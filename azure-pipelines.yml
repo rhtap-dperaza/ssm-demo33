@@ -32,6 +32,7 @@ steps:
       df -h
       echo "Current Directory:"
       pwd
+      env
       echo "Cleaning directory: $(Agent.WorkFolder)"
       echo "Moving to Home dir: $(Agent.HomeDirectory)"
       cd $(Agent.HomeDirectory)
