@@ -37,7 +37,7 @@ steps:
       echo "Moving to Home dir: $(Agent.HomeDirectory)"
       cd $(Agent.HomeDirectory)
       ls $(Agent.WorkFolder)
-      # rm -rf $(Agent.WorkFolder)/*
+      rm -rf $(Agent.WorkFolder)/*
       echo "Running Docker prune targeting images older than 12h"
       podman system prune -af --filter "until=12h"
       echo "Disk usage after cleanup:"
